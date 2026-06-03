@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Multi Product Stock In / Out Tracker</title>
+
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #dbe3ef;
+      --accent: #2563eb;
+      --accent-dark: #1d4ed8;
+      --danger: #dc2626;
+      --success: #15803d;
+      --warning: #d97706;
+      --shadow: 0 20px 50px rgba(31, 41, 55, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--text);
+      background: linear-gradient(135deg, #eef4ff, var(--bg));
+    }
+
+    .app {
+      width: min(1240px, calc(100% - 32px));
+      margin: 32px auto;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1fr 280px 280px;
+      gap: 24px;
+      align-items: stretch;
+      margin-bottom: 24px;
+    }
+
+    .eyebrow {
+      color: var(--accent);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin: 0 0 8px;
+    }
+
+    h1, h2, h3 {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 5vw, 4rem);
+    }
+
+    h2 {
+      font-size: 1.15rem;
+    }
+
+    h3 {
+      font-size: 1rem;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      max-width: 680px;
+      line-height: 1.6;
+    }
+
+    .stat-card,
+    .panel {
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .stat-card {
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .stat-card span {
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .stat-card strong {
+      font-size: 3.4rem;
+      line-height: 1;
+      color: var(--accent);
+    }
+
+    .panel {
+      padding: 22px;
+      margin-bottom: 24px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr 1fr 1fr 1.4fr auto;
+      gap: 14px;
+      align-items: end;
+      margin-top: 18px;
+    }
+
+    label {
+      display: grid;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+
+    input,
+    select,
+    button {
+      height: 44px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      padding: 0 12px;
+      font: inherit;
+    }
+
+    input,
+    select {
+      background: #fff;
+      color: var(--text);
+    }
+
+    button {
+      border: none;
+      background: var(--accent);
+      color: white;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.2s ease;
+      white-space: nowrap;
+    }
+
+    button:hover {
+      background: var(--accent-dark);
+      transform: translateY(-1px);
+    }
+
+    button.danger {
+      background: var(--danger);
+    }
+
+    button.small {
+      width: auto;
+      height: 36px;
+      padding: 0 12px;
+      font-size: 0.9rem;
+    }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: 1.05fr 1fr;
+      gap: 24px;
+    }
+
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 640px;
+    }
+
+    th,
+    td {
+      text-align: left;
+      padding: 14px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .product-name {
+      font-weight: 800;
+    }
+
+    .stock-positive {
+      color: var(--success);
+      font-weight: 800;
+    }
+
+    .stock-zero {
+      color: var(--warning);
+      font-weight: 800;
+    }
+
+    .stock-negative {
+      color: var(--danger);
+      font-weight: 800;
+    }
+
+    .movement-list {
+      display: grid;
+      gap: 12px;
+      max-height: 560px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .movement {
+      display: grid;
+      gap: 8px;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: #fff;
+    }
+
+    .movement-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .movement-meta {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    .badge.in {
+      background: #dcfce7;
+      color: var(--success);
+    }
+
+    .badge.out {
+      background: #fee2e2;
+      color: var(--danger);
+    }
+
+    .filters {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .empty {
+      color: var(--muted);
+      padding: 22px;
+      text-align: center;
+      border: 1px dashed var(--border);
+      border-radius: 16px;
+    }
+
+    @media (max-width: 1050px) {
+      .hero,
+      .dashboard,
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      button {
+        width: 100%;
+      }
+
+      .actions button {
+        width: auto;
+      }
+
+      .filters {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="app">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Inventory tracker</p>
+        <h1>Multi Product Stock</h1>
+        <p class="subtitle">
+          Track stock IN and OUT for many products like pd a, pd b, pd c.
+          The app remembers every movement, every date, and the last stock left for each product.
+        </p>
+      </div>
+
+      <div class="stat-card">
+        <span>Total products</span>
+        <strong id="totalProducts">0</strong>
+      </div>
+
+      <div class="stat-card">
+        <span>Total stock left</span>
+        <strong id="totalStock">0</strong>
+      </div>
+    </header>
+
+    <section class="panel">
+      <h2>Add stock movement</h2>
+
+      <form id="stockForm" class="form-grid">
+        <label>
+          Product
+          <input list="productOptions" type="text" id="product" placeholder="Example: pd a" required />
+          <datalist id="productOptions"></datalist>
+        </label>
+
+        <label>
+          Date
+          <input type="date" id="date" required />
+        </label>
+
+        <label>
+          Type
+          <select id="type" required>
+            <option value="in">Stock In</option>
+            <option value="out">Stock Out</option>
+          </select>
+        </label>
+
+        <label>
+          Quantity
+          <input type="number" id="quantity" min="1" step="1" placeholder="Example: 10" required />
+        </label>
+
+        <label>
+          Note
+          <input type="text" id="note" placeholder="Supplier, customer, reason..." />
+        </label>
+
+        <button type="submit">Save</button>
+      </form>
+    </section>
+
+    <section class="dashboard">
+      <div class="panel">
+        <div class="section-title">
+          <h2>Product stock left</h2>
+          <div class="actions">
+            <button id="exportCsv" class="small" type="button">Export CSV</button>
+            <button id="clearAll" class="small danger" type="button">Clear all</button>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Total In</th>
+                <th>Total Out</th>
+                <th>Stock Left</th>
+                <th>Last Date</th>
+              </tr>
+            </thead>
+            <tbody id="productBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="section-title">
+          <h2>Movements</h2>
+        </div>
+
+        <div class="filters">
+          <label>
+            Filter by product
+            <select id="productFilter">
+              <option value="all">All products</option>
+            </select>
+          </label>
+
+          <label>
+            Filter by date
+            <input type="date" id="dateFilter" />
+          </label>
+        </div>
+
+        <div id="movementList" class="movement-list"></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="section-title">
+        <h2>Daily summary by product</h2>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Product</th>
+              <th>Stock In</th>
+              <th>Stock Out</th>
+              <th>Stock Left After This Date</th>
+            </tr>
+          </thead>
+          <tbody id="dailyBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const STORAGE_KEY = "multiProductStockTracker.v1";
+
+    const form = document.getElementById("stockForm");
+    const productInput = document.getElementById("product");
+    const productOptions = document.getElementById("productOptions");
+    const dateInput = document.getElementById("date");
+    const typeInput = document.getElementById("type");
+    const quantityInput = document.getElementById("quantity");
+    const noteInput = document.getElementById("note");
+
+    const totalProductsEl = document.getElementById("totalProducts");
+    const totalStockEl = document.getElementById("totalStock");
+    const productBody = document.getElementById("productBody");
+    const dailyBody = document.getElementById("dailyBody");
+    const movementList = document.getElementById("movementList");
+
+    const productFilter = document.getElementById("productFilter");
+    const dateFilter = document.getElementById("dateFilter");
+
+    const clearAllBtn = document.getElementById("clearAll");
+    const exportCsvBtn = document.getElementById("exportCsv");
+
+    let movements = loadMovements();
+
+    dateInput.value = new Date().toISOString().slice(0, 10);
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+
+      const product = productInput.value.trim();
+      const quantity = Number(quantityInput.value);
+
+      if (!product || !dateInput.value || quantity <= 0) {
+        alert("Please enter product, date, and a valid quantity.");
+        return;
+      }
+
+      movements.push({
+        id: getId(),
+        product,
+        productKey: product.toLowerCase(),
+        date: dateInput.value,
+        type: typeInput.value,
+        quantity,
+        note: noteInput.value.trim(),
+        createdAt: new Date().toISOString()
+      });
+
+      saveMovements();
+      form.reset();
+      dateInput.value = new Date().toISOString().slice(0, 10);
+      render();
+    });
+
+    productFilter.addEventListener("change", render);
+    dateFilter.addEventListener("input", render);
+
+    clearAllBtn.addEventListener("click", () => {
+      if (!confirm("Delete all stock records from this browser?")) return;
+      movements = [];
+      saveMovements();
+      productFilter.value = "all";
+      dateFilter.value = "";
+      render();
+    });
+
+    exportCsvBtn.addEventListener("click", () => {
+      const rows = [
+        ["Date", "Product", "Type", "Quantity", "Note", "Created At"],
+        ...movements.map(m => [m.date, m.product, m.type, m.quantity, m.note, m.createdAt])
+      ];
+
+      const csv = rows
+        .map(row => row.map(value => `"${String(value).replaceAll('"', '""')}"`).join(","))
+        .join("\n");
+
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "multi-product-stock.csv";
+      link.click();
+
+      URL.revokeObjectURL(url);
+    });
+
+    render();
+
+    function loadMovements() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveMovements() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(movements));
+    }
+
+    function getId() {
+      if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+      return String(Date.now()) + Math.random().toString(16).slice(2);
+    }
+
+    function getProducts() {
+      const map = new Map();
+
+      for (const movement of movements) {
+        if (!map.has(movement.productKey)) {
+          map.set(movement.productKey, movement.product);
+        }
+      }
+
+      return [...map.entries()]
+        .map(([key, name]) => ({ key, name }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    function calculateProductSummary() {
+      const summary = new Map();
+
+      for (const movement of movements) {
+        if (!summary.has(movement.productKey)) {
+          summary.set(movement.productKey, {
+            product: movement.product,
+            productKey: movement.productKey,
+            stockIn: 0,
+            stockOut: 0,
+            stockLeft: 0,
+            lastDate: movement.date
+          });
+        }
+
+        const item = summary.get(movement.productKey);
+
+        if (movement.type === "in") {
+          item.stockIn += movement.quantity;
+        } else {
+          item.stockOut += movement.quantity;
+        }
+
+        item.stockLeft = item.stockIn - item.stockOut;
+
+        if (movement.date > item.lastDate) {
+          item.lastDate = movement.date;
+        }
+      }
+
+      return [...summary.values()].sort((a, b) => a.product.localeCompare(b.product));
+    }
+
+    function calculateDailySummary() {
+      const sorted = [...movements].sort((a, b) => {
+        if (a.productKey === b.productKey) {
+          if (a.date === b.date) return a.createdAt.localeCompare(b.createdAt);
+          return a.date.localeCompare(b.date);
+        }
+        return a.product.localeCompare(b.product);
+      });
+
+      const grouped = new Map();
+
+      for (const movement of sorted) {
+        const key = `${movement.productKey}|${movement.date}`;
+
+        if (!grouped.has(key)) {
+          grouped.set(key, {
+            date: movement.date,
+            product: movement.product,
+            productKey: movement.productKey,
+            stockIn: 0,
+            stockOut: 0,
+            stockLeft: 0
+          });
+        }
+
+        const day = grouped.get(key);
+
+        if (movement.type === "in") {
+          day.stockIn += movement.quantity;
+        } else {
+          day.stockOut += movement.quantity;
+        }
+      }
+
+      const days = [...grouped.values()].sort((a, b) => {
+        if (a.productKey === b.productKey) return a.date.localeCompare(b.date);
+        return a.product.localeCompare(b.product);
+      });
+
+      const runningByProduct = {};
+
+      for (const day of days) {
+        if (!runningByProduct[day.productKey]) runningByProduct[day.productKey] = 0;
+        runningByProduct[day.productKey] += day.stockIn - day.stockOut;
+        day.stockLeft = runningByProduct[day.productKey];
+      }
+
+      return days.sort((a, b) => {
+        if (a.date === b.date) return a.product.localeCompare(b.product);
+        return b.date.localeCompare(a.date);
+      });
+    }
+
+    function render() {
+      const products = getProducts();
+      const productSummary = calculateProductSummary();
+      const dailySummary = calculateDailySummary();
+
+      totalProductsEl.textContent = products.length;
+      totalStockEl.textContent = productSummary.reduce((sum, item) => sum + item.stockLeft, 0);
+
+      renderProductOptions(products);
+      renderFilters(products);
+      renderProductSummary(productSummary);
+      renderDailySummary(dailySummary);
+      renderMovements();
+    }
+
+    function renderProductOptions(products) {
+      productOptions.innerHTML = products
+        .map(product => `<option value="${escapeHtml(product.name)}"></option>`)
+        .join("");
+    }
+
+    function renderFilters(products) {
+      const selected = productFilter.value;
+
+      productFilter.innerHTML = `
+        <option value="all">All products</option>
+        ${products.map(product => `
+          <option value="${escapeHtml(product.key)}">${escapeHtml(product.name)}</option>
+        `).join("")}
+      `;
+
+      if ([...productFilter.options].some(option => option.value === selected)) {
+        productFilter.value = selected;
+      }
+    }
+
+    function renderProductSummary(summary) {
+      if (summary.length === 0) {
+        productBody.innerHTML = `
+          <tr>
+            <td colspan="5" class="empty">No products yet. Add pd a, pd b, pd c, or any product name.</td>
+          </tr>
+        `;
+        return;
+      }
+
+      productBody.innerHTML = summary.map(item => `
+        <tr>
+          <td class="product-name">${escapeHtml(item.product)}</td>
+          <td>${item.stockIn}</td>
+          <td>${item.stockOut}</td>
+          <td class="${stockClass(item.stockLeft)}">${item.stockLeft}</td>
+          <td>${formatDate(item.lastDate)}</td>
+        </tr>
+      `).join("");
+    }
+
+    function renderDailySummary(summary) {
+      if (summary.length === 0) {
+        dailyBody.innerHTML = `
+          <tr>
+            <td colspan="5" class="empty">No daily stock summary yet.</td>
+          </tr>
+        `;
+        return;
+      }
+
+      dailyBody.innerHTML = summary.map(day => `
+        <tr>
+          <td>${formatDate(day.date)}</td>
+          <td class="product-name">${escapeHtml(day.product)}</td>
+          <td>${day.stockIn}</td>
+          <td>${day.stockOut}</td>
+          <td class="${stockClass(day.stockLeft)}">${day.stockLeft}</td>
+        </tr>
+      `).join("");
+    }
+
+    function renderMovements() {
+      let filtered = [...movements];
+
+      if (productFilter.value !== "all") {
+        filtered = filtered.filter(m => m.productKey === productFilter.value);
+      }
+
+      if (dateFilter.value) {
+        filtered = filtered.filter(m => m.date === dateFilter.value);
+      }
+
+      if (filtered.length === 0) {
+        movementList.innerHTML = `<div class="empty">No movements found.</div>`;
+        return;
+      }
+
+      movementList.innerHTML = filtered
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+        .map(movement => `
+          <article class="movement">
+            <div class="movement-top">
+              <strong>${escapeHtml(movement.product)}</strong>
+              <span class="badge ${movement.type}">
+                ${movement.type === "in" ? "IN" : "OUT"} ${movement.quantity}
+              </span>
+            </div>
+            <div class="movement-meta">${formatDate(movement.date)}</div>
+            <span>${escapeHtml(movement.note || "No note")}</span>
+          </article>
+        `)
+        .join("");
+    }
+
+    function stockClass(stock) {
+      if (stock > 0) return "stock-positive";
+      if (stock < 0) return "stock-negative";
+      return "stock-zero";
+    }
+
+    function formatDate(dateString) {
+      const date = new Date(dateString + "T00:00:00");
+      return date.toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric"
+      });
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+  </script>
+</body>
+</html>
